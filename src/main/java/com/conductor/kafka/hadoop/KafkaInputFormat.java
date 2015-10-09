@@ -226,6 +226,9 @@ public class KafkaInputFormat extends InputFormat<LongWritable, BytesWritable> {
         for (final long offset : allOffsets) {
             if (offset > lastCommit && offset > includeAfter) {
                 result.add(offset);
+            } else if (lastCommit == -1L) {
+                // nothing commited yet, so consume everything
+                result.add(offset);
             } else {
                 // we add "lastCommit" iff it is after "includeAfter"
                 if (lastCommit > includeAfter) {
