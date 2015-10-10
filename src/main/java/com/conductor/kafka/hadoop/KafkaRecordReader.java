@@ -214,7 +214,8 @@ public class KafkaRecordReader extends RecordReader<LongWritable, BytesWritable>
     @VisibleForTesting
     SimpleConsumer getConsumer(final KafkaInputSplit split, final Configuration conf) {
         return new SimpleConsumer(split.getPartition().getBroker().getHost(), split.getPartition().getBroker()
-                .getPort(), getKafkaSocketTimeoutMs(conf), getKafkaBufferSizeBytes(conf), "kafkaInputFormat");
+                .getPort(), getKafkaSocketTimeoutMs(conf), getKafkaBufferSizeBytes(conf),
+                KafkaInputFormat.getConsumerGroup(conf));
     }
 
     @VisibleForTesting

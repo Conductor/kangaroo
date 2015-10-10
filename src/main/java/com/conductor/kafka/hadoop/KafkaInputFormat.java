@@ -175,13 +175,13 @@ public class KafkaInputFormat extends InputFormat<LongWritable, BytesWritable> {
                 // cache the consumer connections - each partition will make use of each broker consumer
                 final Broker broker = partition.getBroker();
                 if (!consumers.containsKey(broker)) {
-                    consumers.put(broker, getConsumer(broker));
+                    consumers.put(broker, getConsumer(broker, conf));
                 }
 
                 // grab all valid offsets
                 final List<Long> offsets = getOffsets(consumers.get(broker), topic, partition.getPartId(),
                         zk.getLastCommit(group, partition), getIncludeOffsetsAfterTimestamp(conf),
-                        getMaxSplitsPerPartition(conf));
+                        getMaxSplitsPerPartition(conf), conf);
                 for (int i = 0; i < offsets.size() - 1; i++) {
                     // ( offsets in descending order )
                     final long start = offsets.get(i + 1);
@@ -206,17 +206,17 @@ public class KafkaInputFormat extends InputFormat<LongWritable, BytesWritable> {
 
     @VisibleForTesting
     List<Long> getOffsets(final SimpleConsumer consumer, final String topic, final int partitionNum,
-            final long lastCommit, final long asOfTime, final int maxSplitsPerPartition) {
+            final long lastCommit, final long asOfTime, final int maxSplitsPerPartition, final Configuration conf) {
         // TODO: take advantage of new API, which allows you to request offsets for multiple topic-partitions.
 
         // all offsets that exist for this partition (in descending order)
         final OffsetRequest allReq = toOffsetRequest(topic, partitionNum, kafka.api.OffsetRequest.LatestTime(),
-                Integer.MAX_VALUE);
+                Integer.MAX_VALUE, conf);
         final OffsetResponse allOffsetsResponse = consumer.getOffsetsBefore(allReq);
         final long[] allOffsets = allOffsetsResponse.offsets(topic, partitionNum);
 
         // this gets us an offset that is strictly before 'asOfTime', or zero if none exist before that time
-        final OffsetRequest requestBeforeAsOf = toOffsetRequest(topic, partitionNum, asOfTime, 1);
+        final OffsetRequest requestBeforeAsOf = toOffsetRequest(topic, partitionNum, asOfTime, 1, conf);
         final OffsetResponse offsetsBeforeAsOfResponse = consumer.getOffsetsBefore(requestBeforeAsOf);
         final long[] offsetsBeforeAsOf = offsetsBeforeAsOfResponse.offsets(topic, partitionNum);
         final long includeAfter = offsetsBeforeAsOf.length == 1 ? offsetsBeforeAsOf[0] : 0;
@@ -248,12 +248,13 @@ public class KafkaInputFormat extends InputFormat<LongWritable, BytesWritable> {
 
     @VisibleForTesting
     static OffsetRequest toOffsetRequest(final String topic, final int partitionNum, final long asOfTime,
-            final int numOffsets) {
+            final int numOffsets, final Configuration conf) {
         final TopicAndPartition topicAndPartition = new TopicAndPartition(topic, partitionNum);
         final PartitionOffsetRequestInfo partitionInfoReq = new PartitionOffsetRequestInfo(asOfTime, numOffsets);
         final Map<TopicAndPartition, PartitionOffsetRequestInfo> requestInfo = ImmutableMap.of(topicAndPartition,
                 partitionInfoReq);
-        return new OffsetRequest(requestInfo, kafka.api.OffsetRequest.CurrentVersion(), "KafkaInputFormat");
+        return new OffsetRequest(requestInfo, kafka.api.OffsetRequest.CurrentVersion(),
+                KafkaInputFormat.getConsumerGroup(conf));
     }
 
     /*
@@ -261,9 +262,9 @@ public class KafkaInputFormat extends InputFormat<LongWritable, BytesWritable> {
      */
 
     @VisibleForTesting
-    SimpleConsumer getConsumer(final Broker broker) {
+    SimpleConsumer getConsumer(final Broker broker, final Configuration conf) {
         return new SimpleConsumer(broker.getHost(), broker.getPort(), DEFAULT_SOCKET_TIMEOUT_MS,
-                DEFAULT_BUFFER_SIZE_BYTES, "KafkaInputFormat");
+                DEFAULT_BUFFER_SIZE_BYTES, KafkaInputFormat.getConsumerGroup(conf));
     }
 
     @VisibleForTesting
