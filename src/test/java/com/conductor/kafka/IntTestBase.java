@@ -23,17 +23,23 @@ public class IntTestBase {
 
     @BeforeClass
     static public void setUp() {
-        // embedded kafka + zookeeper, thus we
+        // Embedded kafka + zookeeper
         zkPort = 11111;
         kafkaPort = 11112; // TODO pick dynamically so can run in parallel on the same machine
         kafka = new KafkaUnit(zkPort, kafkaPort);
 
-        // use small segments to test multiple segments with smaller amount of records
+        // Use small segments to test multiple segments with smaller amount of records
         kafka.setKafkaBrokerConfig("log.segment.bytes", "1024");
+
+        // Flush data often so we don't have moments when we verify results that's not been flushed yet.
+        // Makes performance bad, but reliable results.
+        kafka.setKafkaBrokerConfig("log.flush.interval.messages", "1");
+        kafka.setKafkaBrokerConfig("log.flush.scheduler.interval.ms", "100");
+        kafka.setKafkaBrokerConfig("log.flush.interval.ms", "100");
 
         kafka.startup();
 
-        // create new topic and put some test messages
+        // Create new topic and put some test messages
         kafka.createTopic(TEST_TOPIC);
 
         for (int i = 1; i <= NUMBER_EVENTS; i++) {
@@ -51,6 +57,7 @@ public class IntTestBase {
     }
 
     static protected String getMessageBody(Integer messageNumber) {
+        // Zeros padding makes messages possible to sort just by its string values
         return "test-message-" + String.format("%05d", messageNumber);
     }
 

@@ -219,20 +219,21 @@ public class KafkaInputFormat extends InputFormat<LongWritable, BytesWritable> {
         final OffsetRequest requestBeforeAsOf = toOffsetRequest(topic, partitionNum, asOfTime, 1, conf);
         final OffsetResponse offsetsBeforeAsOfResponse = consumer.getOffsetsBefore(requestBeforeAsOf);
         final long[] offsetsBeforeAsOf = offsetsBeforeAsOfResponse.offsets(topic, partitionNum);
-        final long includeAfter = offsetsBeforeAsOf.length == 1 ? offsetsBeforeAsOf[0] : 0;
+        final long includeAfter = offsetsBeforeAsOf.length == 1 ? offsetsBeforeAsOf[0] : -1;
 
         // note that the offsets are in descending order
         List<Long> result = Lists.newArrayList();
+        System.out.println("allOffsets: " + Arrays.toString(allOffsets));
         for (final long offset : allOffsets) {
             if (offset > lastCommit && offset > includeAfter) {
                 result.add(offset);
-            } else if (lastCommit == -1L) {
+            } else if (lastCommit == -1L && offset > includeAfter) {
                 // nothing commited yet, so consume everything
                 result.add(offset);
             } else {
-                // we add "lastCommit" iff it is after "includeAfter"
+                // we add "lastCommit" if it is after "includeAfter"
                 if (lastCommit > includeAfter) {
-                    result.add(lastCommit);
+                    result.add(lastCommit +1);
                 }
                 // we can break out of loop here bc offsets are in desc order, and we've hit the latest one to include
                 break;

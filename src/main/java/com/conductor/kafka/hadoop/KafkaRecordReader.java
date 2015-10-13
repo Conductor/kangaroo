@@ -160,7 +160,7 @@ public class KafkaRecordReader extends RecordReader<LongWritable, BytesWritable>
      */
     @VisibleForTesting
     boolean continueItr() {
-        final long remaining = end - pos -1;
+        final long remaining = end - pos -1; // we exclude the last element. A split 10-20 means elements from 10 to 19.
         if (!canCallNext() && remaining > 0) {
             LOG.debug(String.format("%s fetching %d bytes starting at offset %d",
                     split.toString(), fetchSize, pos));
@@ -168,7 +168,7 @@ public class KafkaRecordReader extends RecordReader<LongWritable, BytesWritable>
             final int partition = split.getPartition().getPartId();
             final FetchRequest request = new FetchRequestBuilder()
                     .addFetch(topic, partition, pos, fetchSize)
-                    .clientId("KafkaRecordReader")
+                    .clientId(KafkaInputFormat.getConsumerGroup(conf))
                     .build();
             final FetchResponse fetchResponse = consumer.fetch(request);
             if (fetchResponse.hasError()) {

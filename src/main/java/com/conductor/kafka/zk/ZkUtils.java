@@ -171,9 +171,7 @@ public class ZkUtils implements Closeable {
 
     /**
      * Checks whether the provided partition exists on the {@link Broker}.
-     * 
-     * @param broker
-     *            the broker.
+     *
      * @param topic
      *            the topic.
      * @param partId

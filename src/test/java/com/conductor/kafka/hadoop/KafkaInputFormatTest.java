@@ -167,7 +167,7 @@ public class KafkaInputFormatTest {
         final int lastCommit = 52;
         expected = new long[6];
         System.arraycopy(offsets, 0, expected, 0, 6);
-        expected[5] = lastCommit;
+        expected[5] = lastCommit +1;
         actual = inputFormat.getOffsets(consumer, "topic", 1, lastCommit, 0, Integer.MAX_VALUE, mockConf);
         compareArrayContents(expected, actual);
 
