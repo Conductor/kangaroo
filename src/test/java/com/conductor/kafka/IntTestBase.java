@@ -10,7 +10,7 @@ import org.junit.BeforeClass;
  *
  * Created by Greg Temchenko on 10/5/15.
  */
-public class IntTestBase {
+public abstract class IntTestBase {
 
     final static protected String TEST_TOPIC = "test-topic";
     final static protected String TEST_GROUP = "test-group";
@@ -42,17 +42,21 @@ public class IntTestBase {
         // Create new topic and put some test messages
         kafka.createTopic(TEST_TOPIC);
 
-        for (int i = 1; i <= NUMBER_EVENTS; i++) {
-            KeyedMessage<String, String> keyedMessage = new KeyedMessage<>(TEST_TOPIC,
-                    "test-key-" + Integer.valueOf(i), getMessageBody(i));
-            kafka.sendMessages(keyedMessage);
-        }
+        generateEvents(TEST_TOPIC, NUMBER_EVENTS);
     }
 
     @AfterClass
     static public void tearDown() throws Exception {
         if (kafka != null) {
             kafka.shutdown();
+        }
+    }
+
+    static protected void generateEvents(String topic, int numberEvents) {
+        for (int i = 1; i <= numberEvents; i++) {
+            KeyedMessage<String, String> keyedMessage = new KeyedMessage<>(topic,
+                    "test-key-" + Integer.valueOf(i), getMessageBody(i));
+            kafka.sendMessages(keyedMessage);
         }
     }
 

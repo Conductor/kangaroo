@@ -41,4 +41,25 @@ public class KafkaInputFormatIntTest extends IntTestBase {
         assertEquals(100, sum);
     }
 
+    @Test
+    public void getAllSplits_singleSplit() throws Exception {
+        String topic = "KafkaInputFormatIntTest.getAllSplits_singleSplit";
+        kafka.createTopic(topic);
+        generateEvents(topic, 3);
+
+        KafkaInputFormat kafkaInputFormat = new KafkaInputFormat();
+
+        Configuration conf = new Configuration();
+        conf.set("kafka.zk.connect", "localhost:" + Integer.valueOf(zkPort));
+        conf.set("kafka.topic", topic);
+        conf.set("kafka.groupid", TEST_GROUP);
+
+        JobConf jobConf = new JobConf(conf);
+        JobContext jobContext = new JobContextImpl(jobConf, JobID.forName("job_test_123"));
+        List<InputSplit> splits = kafkaInputFormat.getSplits(jobContext);
+
+        // check
+        assert splits.size() == 1;
+    }
+
 }
