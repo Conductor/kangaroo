@@ -223,7 +223,7 @@ public class KafkaInputFormat extends InputFormat<LongWritable, BytesWritable> {
 
         // note that the offsets are in descending order
         List<Long> result = Lists.newArrayList();
-        System.out.println("allOffsets: " + Arrays.toString(allOffsets));
+        LOG.debug("Offsets returned by SimpleConsumer: " + Arrays.toString(allOffsets));
         for (final long offset : allOffsets) {
             if (offset > lastCommit && offset > includeAfter) {
                 result.add(offset);

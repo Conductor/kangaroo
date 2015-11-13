@@ -200,10 +200,10 @@ public class ZkUtilsTest {
         final Broker broker = new Broker("localhost", 9092, 1);
         final Partition partition = new Partition("topic_name", 0, broker);
         // consumer
-        assertEquals("/consumers/group_name/offsets/topic_name/1-0", zk.getOffsetsPath("group_name", partition));
-        assertEquals("/consumers/group_name/offsets-temp/topic_name/1-0",
+        assertEquals("/kangaroo-consumers/group_name/offsets/topic_name/1-0", zk.getOffsetsPath("group_name", partition));
+        assertEquals("/kangaroo-consumers/group_name/offsets-temp/topic_name/1-0",
                 zk.getTempOffsetsPath("group_name", partition));
-        assertEquals("/consumers/group_name/offsets-temp/topic_name",
+        assertEquals("/kangaroo-consumers/group_name/offsets-temp/topic_name",
                 zk.getTempOffsetsSubPath("group_name", "topic_name"));
 
         // broker-id

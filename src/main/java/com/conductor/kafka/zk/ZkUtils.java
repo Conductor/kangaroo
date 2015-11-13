@@ -81,6 +81,15 @@ public class ZkUtils implements Closeable {
         this(new ZkClient(zkConnectionString, sessionTimeout, connectionTimeout, new StringSerializer()), zkRoot);
     }
 
+    public ZkUtils(final String zkConnectionString) {
+        this(new ZkClient(
+                        zkConnectionString,
+                        KafkaInputFormat.DEFAULT_ZK_SESSION_TIMEOUT_MS,
+                        KafkaInputFormat.DEFAULT_ZK_CONNECTION_TIMEOUT_MS,
+                        new StringSerializer()),
+                KafkaInputFormat.DEFAULT_ZK_ROOT);
+    }
+
     /**
      * Creates a Zookeeper client based on the settings in {@link Configuration}.
      * 
@@ -195,6 +204,7 @@ public class ZkUtils implements Closeable {
     public long getLastCommit(String group, Partition partition) {
         final String offsetPath = getOffsetsPath(group, partition);
         final String offset = client.readData(offsetPath, true);
+        LOG.debug("Offset path: '" + offsetPath + "' value: " + offset);
 
         if (offset == null) {
             return -1L;
@@ -272,7 +282,7 @@ public class ZkUtils implements Closeable {
 
     @VisibleForTesting
     String getOffsetsPath(String group, Partition partition) {
-        return format("%s/consumers/%s/offsets/%s/%s", zkRoot, group, partition.getTopic(),
+        return format("%s/kangaroo-consumers/%s/offsets/%s/%s", zkRoot, group, partition.getTopic(),
                 partition.getBrokerPartition());
     }
 
@@ -283,7 +293,7 @@ public class ZkUtils implements Closeable {
 
     @VisibleForTesting
     String getTempOffsetsSubPath(String group, String topic) {
-        return format("%s/consumers/%s/offsets-temp/%s", zkRoot, group, topic);
+        return format("%s/kangaroo-consumers/%s/offsets-temp/%s", zkRoot, group, topic);
     }
 
     @VisibleForTesting
