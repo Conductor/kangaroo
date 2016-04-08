@@ -97,7 +97,7 @@ public class KafkaRecordReaderTest {
         assertEquals(0, reader.getStart());
         assertEquals(100, reader.getEnd());
         assertEquals(0, reader.getPos());
-        assertEquals(0, reader.getCurrentOffset());
+        assertEquals(0, reader.getPos());
         assertNull("Iterator should not have been initialized yet!", reader.getCurrentMessageItr());
         assertNull("Current key should be null!", reader.getCurrentKey());
         assertNull("Current value should be null!", reader.getCurrentValue());
@@ -152,7 +152,7 @@ public class KafkaRecordReaderTest {
                 assertTrue(reqInfo.contains(topicAndPartition));
                 final Option<PartitionFetchInfo> fetchInfo = reqInfo.get(topicAndPartition);
                 assertEquals(0, fetchInfo.get().offset());
-                assertEquals(100, fetchInfo.get().fetchSize());
+                assertEquals(2048, fetchInfo.get().fetchSize());
                 return fetchResponse;
             }
         });
@@ -164,7 +164,6 @@ public class KafkaRecordReaderTest {
 
         assertTrue("Should be able to continue iterator!", reader.continueItr());
         assertEquals(mockIterator, reader.getCurrentMessageItr());
-        assertEquals(100, reader.getCurrentOffset());
 
         when(mockIterator.hasNext()).thenReturn(false);
         assertFalse("Should be done with split!", reader.continueItr());

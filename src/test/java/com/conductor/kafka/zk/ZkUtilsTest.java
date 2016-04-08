@@ -61,7 +61,8 @@ public class ZkUtilsTest {
     public void testGetBrokerId() throws Exception {
         // normal case
         final int brokerId = 1;
-        when(client.readData("/brokers/ids/" + brokerId, true)).thenReturn("127.0.0.1-123456789:127.0.0.1:9092");
+        when(client.readData("/brokers/ids/" + brokerId, true))
+                .thenReturn("{\"jmx_port\":-1,\"timestamp\":\"1444274389371\",\"host\":\"127.0.0.1\",\"version\":1,\"port\":9092}");
         final Broker broker = zk.getBroker(brokerId);
         assertEquals("127.0.0.1", broker.getHost());
         assertEquals(9092, broker.getPort());
@@ -90,40 +91,39 @@ public class ZkUtilsTest {
 
     @Test
     public void testPartitions() throws Exception {
-        final Broker broker1 = new Broker("localhost", 9092, 1);
-        final Broker broker2 = new Broker("localhost", 9092, 2);
+        final Broker broker5 = new Broker("localhost", 9092, 5);
+        final Broker broker7 = new Broker("localhost", 9092, 7);
         final List<String> brokerIds = Lists.newArrayList("1", "2");
-        final String brokerTopicPath = "/brokers/topics/the_topic";
+        final String brokerTopicPath = "/brokers/topics/the_topic/partitions";
 
         doReturn(brokerIds).when(zk).getChildrenParentMayNotExist(brokerTopicPath);
-        doReturn(broker1).when(zk).getBroker(1);
-        doReturn(broker2).when(zk).getBroker(2);
+        doReturn(broker5).when(zk).getBroker(5);
+        doReturn(broker7).when(zk).getBroker(7);
 
-        when(client.readData("/brokers/topics/the_topic/1")).thenReturn("5");
-        when(client.readData("/brokers/topics/the_topic/2")).thenReturn("5");
+        when(client.readData("/brokers/topics/the_topic/partitions/1/state"))
+                .thenReturn("{\"controller_epoch\":1,\"leader\":5,\"version\":1,\"leader_epoch\":0,\"isr\":[1]}");
+        when(client.readData("/brokers/topics/the_topic/partitions/2/state"))
+                .thenReturn("{\"controller_epoch\":1,\"leader\":7,\"version\":1,\"leader_epoch\":0,\"isr\":[1]}");
 
         final List<Partition> result = zk.getPartitions("the_topic");
-        assertEquals(10, result.size());
+        assertEquals(2, result.size());
 
-        for (int i = 0; i < 5; ++i) {
-            final Partition part1 = new Partition("the_topic", i, broker1);
-            final Partition part2 = new Partition("the_topic", i, broker2);
-            assertTrue(result.contains(part1));
-            assertTrue(result.contains(part2));
-        }
+        final Partition part1 = new Partition("the_topic", 1, broker5);
+        final Partition part2 = new Partition("the_topic", 2, broker7);
+        assertTrue(result.contains(part1));
+        assertTrue(result.contains(part2));
     }
 
     @Test
     public void testPartitionExists() throws Exception {
-        final Broker broker = new Broker("localhost", 9092, 1);
-        when(client.readData("/brokers/topics/the_topic/1", true)).thenReturn("10");
+        String state = "{\"controller_epoch\":1,\"leader\":5,\"version\":1,\"leader_epoch\":0,\"isr\":[1]}";
+        when(client.readData("/brokers/topics/the_topic/partitions/0/state", true)).thenReturn(state);
+        when(client.readData("/brokers/topics/the_topic/partitions/9/state", true)).thenReturn(state);
+        when(client.readData("/brokers/topics/the_topic/partitions/5/state", true)).thenReturn(state);
 
-        assertTrue(zk.partitionExists(broker, "the_topic", 0));
-        assertTrue(zk.partitionExists(broker, "the_topic", 9));
-        assertFalse(zk.partitionExists(broker, "the_topic", 10));
-
-        when(client.readData("/brokers/topics/the_topic/1", true)).thenReturn(null);
-        assertFalse(zk.partitionExists(broker, "the_topic", 5));
+        assertTrue(zk.partitionExists("the_topic", 0));
+        assertTrue(zk.partitionExists("the_topic", 9));
+        assertFalse(zk.partitionExists("the_topic", 10));
     }
 
     @Test
@@ -200,19 +200,15 @@ public class ZkUtilsTest {
         final Broker broker = new Broker("localhost", 9092, 1);
         final Partition partition = new Partition("topic_name", 0, broker);
         // consumer
-        assertEquals("/consumers/group_name/offsets/topic_name/1-0", zk.getOffsetsPath("group_name", partition));
-        assertEquals("/consumers/group_name/offsets-temp/topic_name/1-0",
+        assertEquals("/kangaroo-consumers/group_name/offsets/topic_name/1-0", zk.getOffsetsPath("group_name", partition));
+        assertEquals("/kangaroo-consumers/group_name/offsets-temp/topic_name/1-0",
                 zk.getTempOffsetsPath("group_name", partition));
-        assertEquals("/consumers/group_name/offsets-temp/topic_name",
+        assertEquals("/kangaroo-consumers/group_name/offsets-temp/topic_name",
                 zk.getTempOffsetsSubPath("group_name", "topic_name"));
 
         // broker-id
         assertEquals("/brokers/ids/1", zk.getBrokerIdPath(1));
         assertEquals("/brokers/ids", zk.getBrokerIdSubPath());
-
-        // broker-topic
-        assertEquals("/brokers/topics/topic_name", zk.getTopicBrokerIdSubPath("topic_name"));
-        assertEquals("/brokers/topics/topic_name/1", zk.getTopicBrokerIdPath("topic_name", 1));
     }
 
     @Test

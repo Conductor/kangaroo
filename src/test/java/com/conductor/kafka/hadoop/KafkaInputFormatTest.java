@@ -89,12 +89,12 @@ public class KafkaInputFormatTest {
         final Configuration mockConf = new Configuration(false);
 
         final Broker broker = new Broker("127.0.0.1", 9092, 1);
-        doReturn(mockConsumer).when(inputFormat).getConsumer(broker);
+        doReturn(mockConsumer).when(inputFormat).getConsumer(broker, mockConf);
         doReturn(mockZk).when(inputFormat).getZk(mockConf);
         doReturn(Lists.newArrayList(20l, 10l)).when(inputFormat).getOffsets(mockConsumer, "topic", 0, -1, 0,
-                Integer.MAX_VALUE);
+                Integer.MAX_VALUE, mockConf);
         doReturn(Lists.newArrayList(30l, 20l, 0l)).when(inputFormat).getOffsets(mockConsumer, "topic", 1, 10, 0,
-                Integer.MAX_VALUE);
+                Integer.MAX_VALUE, mockConf);
 
         final Partition p1 = new Partition("topic", 0, broker);
         final Partition p2 = new Partition("topic", 1, broker);
@@ -130,8 +130,8 @@ public class KafkaInputFormatTest {
         assertEquals("1-1", split3.getPartition().getBrokerPartition());
 
         // verify one and only one call to getConsumer - should get the cached consumer second time around
-        verify(inputFormat, times(1)).getConsumer(broker);
-        verify(inputFormat, times(1)).getConsumer(any(Broker.class));
+        verify(inputFormat, times(1)).getConsumer(broker, mockConf);
+        verify(inputFormat, times(1)).getConsumer(any(Broker.class), any(Configuration.class));
 
         // verify the closeable components are closed
         verify(mockConsumer, times(1)).close();
@@ -141,65 +141,67 @@ public class KafkaInputFormatTest {
     @Test
     public void testGetOffsets() throws Exception {
         final SimpleConsumer consumer = mock(SimpleConsumer.class);
+        final Configuration mockConf = new Configuration(false);
 
         final OffsetResponse responseAll = mock(OffsetResponse.class);
         final long[] offsets = { 101, 91, 81, 71, 61, 51, 41, 31, 21, 11 };
         when(responseAll.offsets("topic", 1)).thenReturn(offsets);
 
         final kafka.javaapi.OffsetRequest offsetRequestAll = KafkaInputFormat.toOffsetRequest("topic", 1,
-                OffsetRequest.LatestTime(), Integer.MAX_VALUE);
+                OffsetRequest.LatestTime(), Integer.MAX_VALUE, mockConf);
         when(consumer.getOffsetsBefore(offsetRequestAll)).thenReturn(responseAll);
 
         final OffsetResponse responseAsOf = mock(OffsetResponse.class);
         when(responseAsOf.offsets("topic", 1)).thenReturn(new long[] {});
-        final kafka.javaapi.OffsetRequest offsetRequestAsOf = KafkaInputFormat.toOffsetRequest("topic", 1, 0, 1);
+        final kafka.javaapi.OffsetRequest offsetRequestAsOf = KafkaInputFormat.toOffsetRequest("topic", 1, 0, 1, mockConf);
         when(consumer.getOffsetsBefore(offsetRequestAsOf)).thenReturn(responseAsOf);
 
         final KafkaInputFormat inputFormat = new KafkaInputFormat();
 
         // case 0: get everything (-1 last commit, 0 asOfTime, as many partitions as possible) -> all offsets
         long[] expected = offsets;
-        List<Long> actual = inputFormat.getOffsets(consumer, "topic", 1, -1, 0, Integer.MAX_VALUE);
+        List<Long> actual = inputFormat.getOffsets(consumer, "topic", 1, -1, 0, Integer.MAX_VALUE, mockConf);
         compareArrayContents(offsets, actual);
 
         // case 1: lastCommit of 52 -> we should only get back the first 5 offsets + the lastCommit
         final int lastCommit = 52;
         expected = new long[6];
         System.arraycopy(offsets, 0, expected, 0, 6);
-        expected[5] = lastCommit;
-        actual = inputFormat.getOffsets(consumer, "topic", 1, lastCommit, 0, Integer.MAX_VALUE);
+        expected[5] = lastCommit +1;
+        actual = inputFormat.getOffsets(consumer, "topic", 1, lastCommit, 0, Integer.MAX_VALUE, mockConf);
         compareArrayContents(expected, actual);
 
         // case 2: lastCommit of 52, asOfTime 51 -> still include last offsets
         final int asOfTime = 999;
-        final kafka.javaapi.OffsetRequest requestAsOf999 = KafkaInputFormat.toOffsetRequest("topic", 1, asOfTime, 1);
+        final kafka.javaapi.OffsetRequest requestAsOf999 = KafkaInputFormat.toOffsetRequest("topic", 1, asOfTime, 1,
+                mockConf);
         when(responseAsOf.offsets("topic", 1)).thenReturn(new long[] { 51 });
         when(consumer.getOffsetsBefore(requestAsOf999)).thenReturn(responseAsOf);
-        actual = inputFormat.getOffsets(consumer, "topic", 1, lastCommit, asOfTime, Integer.MAX_VALUE);
+        actual = inputFormat.getOffsets(consumer, "topic", 1, lastCommit, asOfTime, Integer.MAX_VALUE, mockConf);
         compareArrayContents(expected, actual);
 
         // case 3: lastCommit of 52, asOfTime 52 -> don't include last offsets
         when(responseAsOf.offsets("topic", 1)).thenReturn(new long[] { 52 });
         when(consumer.getOffsetsBefore(requestAsOf999)).thenReturn(responseAsOf);
         expected = Arrays.copyOfRange(offsets, 0, 5);
-        actual = inputFormat.getOffsets(consumer, "topic", 1, lastCommit, asOfTime, Integer.MAX_VALUE);
+        actual = inputFormat.getOffsets(consumer, "topic", 1, lastCommit, asOfTime, Integer.MAX_VALUE, mockConf);
         compareArrayContents(expected, actual);
 
         // case 4: maxSplitsPerPartition == number of commits (5) -> should include all 5 offsets
-        actual = inputFormat.getOffsets(consumer, "topic", 1, lastCommit, asOfTime, 5);
+        actual = inputFormat.getOffsets(consumer, "topic", 1, lastCommit, asOfTime, 5, mockConf);
         compareArrayContents(expected, actual);
 
         // case 5: maxSplitsPerPartition = number of commits - 1 (4) -> should STILL include all 5 offsets
-        actual = inputFormat.getOffsets(consumer, "topic", 1, lastCommit, asOfTime, 4);
+        actual = inputFormat.getOffsets(consumer, "topic", 1, lastCommit, asOfTime, 4, mockConf);
         compareArrayContents(expected, actual);
 
         // case 6: maxSplitsPerPartition = number of commits - 2 (3) -> should exclude the first (largest) offset
-        actual = inputFormat.getOffsets(consumer, "topic", 1, lastCommit, asOfTime, 3);
+        actual = inputFormat.getOffsets(consumer, "topic", 1, lastCommit, asOfTime, 3, mockConf);
         expected = Arrays.copyOfRange(offsets, 1, 5);
         compareArrayContents(expected, actual);
 
         // case 7: maxSplitsPerPartition = 1 -> should include just 2 commits
-        actual = inputFormat.getOffsets(consumer, "topic", 1, lastCommit, asOfTime, 1);
+        actual = inputFormat.getOffsets(consumer, "topic", 1, lastCommit, asOfTime, 1, mockConf);
         expected = Arrays.copyOfRange(offsets, 3, 5);
         compareArrayContents(expected, actual);
     }
