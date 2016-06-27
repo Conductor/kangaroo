@@ -41,10 +41,10 @@ import com.google.common.annotations.VisibleForTesting;
  * A record reader that reads a subsection, [{@link #getStart()}, {@link #getEnd()}), of a Kafka queue
  * {@link com.conductor.kafka.Partition}.
  * 
- * <p/>
+ * <p>
  * Thanks to <a href="https://github.com/miniway">Dongmin Yu</a> for providing the inspiration for this code.
  * 
- * <p/>
+ * <p>
  * The original source code can be found <a target="_blank" href="https://github.com/miniway/kafka-hadoop-consumer">on
  * Github</a>.
  * 

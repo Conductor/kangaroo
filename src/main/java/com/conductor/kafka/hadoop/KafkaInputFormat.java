@@ -41,15 +41,15 @@ import com.google.common.collect.*;
 /**
  * An {@link InputFormat} that splits up Kafka {@link Broker}-{@link Partition}s further into a set of offsets.
  * 
- * <p/>
+ * <p>
  * Specifically, it will call {@link SimpleConsumer#getOffsetsBefore} to retrieve a list of valid offsets, and create
  * {@code N} number of {@link InputSplit}s per {@link Broker}-{@link Partition}, where {@code N} is the number of
  * offsets returned by {@link SimpleConsumer#getOffsetsBefore}.
  * 
- * <p/>
+ * <p>
  * Thanks to <a href="https://github.com/miniway">Dongmin Yu</a> for providing the inspiration for this code.
  * 
- * <p/>
+ * <p>
  * The original source code can be found <a target="_blank" href="https://github.com/miniway/kafka-hadoop-consumer">on
  * Github</a>.
  * 
@@ -112,9 +112,9 @@ public class KafkaInputFormat extends InputFormat<LongWritable, BytesWritable> {
     /**
      * Returns the {@code topic} splits of the consumer {@code group} that would be input to a {@link Job} configured
      * with the provided {@code conf}
-     * <p/>
+     * <p>
      * This information may be useful for calculating the number of reducers your job will need.
-     * <p/>
+     * <p>
      * <em>Note:</em> At the very least, {@code kafka.zk.connect} must be set in {@code conf}.
      *
      * @param conf
@@ -124,7 +124,7 @@ public class KafkaInputFormat extends InputFormat<LongWritable, BytesWritable> {
      * @param group
      *            the consumer group of the hypothetical job
      * @return the number of splits the hypothetical job would get.
-     * @throws IOException
+     * @throws IOException IO error
      */
     public static List<InputSplit> getSplits(final Configuration conf, final String topic, final String group)
             throws IOException {
@@ -134,9 +134,9 @@ public class KafkaInputFormat extends InputFormat<LongWritable, BytesWritable> {
     /**
      * Returns all of the {@code topic} splits that would be input to a {@link Job} configured with the provided
      * {@code conf}.
-     * <p/>
+     * <p>
      * This information may be useful for calculating the number of reducers your job will need.
-     * <p/>
+     * <p>
      * <em>Note:</em> At the very least, {@code kafka.zk.connect} must be set in {@code conf}.
      *
      * @param conf
@@ -144,7 +144,7 @@ public class KafkaInputFormat extends InputFormat<LongWritable, BytesWritable> {
      * @param topic
      *            the kafka topic of hypothetical job.
      * @return the number of splits the hypothetical job would get.
-     * @throws IOException
+     * @throws IOException IO error
      */
     public static List<InputSplit> getAllSplits(final Configuration conf, final String topic) throws IOException {
         // use a random UUID as the consumer group to (basically) guarantee a non-existent consumer
@@ -416,7 +416,7 @@ public class KafkaInputFormat extends InputFormat<LongWritable, BytesWritable> {
 
     /**
      * Only consider partitions created <em>approximately</em> on or after {@code timestamp}.
-     * <p/>
+     * <p>
      * Note that you are only guaranteed to get all data on or after {@code timestamp}, but you may get <i>some</i> data
      * before the specified timestamp.
      * 
@@ -444,7 +444,7 @@ public class KafkaInputFormat extends InputFormat<LongWritable, BytesWritable> {
 
     /**
      * Limits the number of splits to create per partition.
-     * <p/>
+     * <p>
      * Note that it if there more partitions to consume than {@code maxSplits}, the input format will take the
      * <em>earliest</em> Kafka partitions.
      * 

@@ -27,11 +27,10 @@ import org.apache.hadoop.util.ReflectionUtils;
  * An {@link InputSplit} that tags another InputSplit with extra data for use by DelegatingInputFormat's and
  * {@link DelegatingMapper}s.
  * 
- * <p/>
+ * <p>
  * This package-private class is taken directly from the Hadoop source code, and made public here so that we can
  * leverage it for the {@link com.conductor.kafka.hadoop.MultipleKafkaInputFormat}.
  * 
- * @see org.apache.hadoop.mapreduce.lib.input.TaggedInputSplit
  * @see DelegatingMapper
  * @see DelegatingRecordReader
  * @see com.conductor.kafka.hadoop.MultipleKafkaInputFormat

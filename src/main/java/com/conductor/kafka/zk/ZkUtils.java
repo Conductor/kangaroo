@@ -42,10 +42,10 @@ import com.google.common.collect.Ranges;
  * This class wraps some of the Kafka interactions with Zookeeper, namely {@link Broker} and {@link Partition} queries,
  * as well as consumer group offset operations and queries.
  * 
- * <p/>
+ * <p>
  * Thanks to <a href="https://github.com/miniway">Dongmin Yu</a> for providing the inspiration for this code.
  * 
- * <p/>
+ * <p>
  * The original source code can be found <a target="_blank" href="https://github.com/miniway/kafka-hadoop-consumer">on
  * Github</a>.
  * 
@@ -110,7 +110,7 @@ public class ZkUtils implements Closeable {
     /**
      * Closes the Zookeeper client
      * 
-     * @throws IOException
+     * @throws IOException IO error
      */
     @Override
     public void close() throws IOException {
@@ -214,7 +214,7 @@ public class ZkUtils implements Closeable {
 
     /**
      * ` Sets the last offset to {@code commit} of the {@code group} for the given {@code topic-partition}.
-     * <p/>
+     * <p>
      * If {@code temp == true}, this will "temporarily" set the offset, in which case the user must call
      * {@link #commit(String, String)}. This is useful if a user wants to temporarily commit an offset for a topic
      * partition, and then commit it once <em>all</em> topic partitions have completed.
