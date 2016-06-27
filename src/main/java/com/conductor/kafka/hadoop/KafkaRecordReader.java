@@ -41,10 +41,10 @@ import com.google.common.annotations.VisibleForTesting;
  * A record reader that reads a subsection, [{@link #getStart()}, {@link #getEnd()}), of a Kafka queue
  * {@link com.conductor.kafka.Partition}.
  * 
- * <p/>
+ * <p>
  * Thanks to <a href="https://github.com/miniway">Dongmin Yu</a> for providing the inspiration for this code.
  * 
- * <p/>
+ * <p>
  * The original source code can be found <a target="_blank" href="https://github.com/miniway/kafka-hadoop-consumer">on
  * Github</a>.
  * 
@@ -67,7 +67,6 @@ public class KafkaRecordReader extends RecordReader<LongWritable, BytesWritable>
     private long end;
     private long pos;
     private int fetchSize;
-    private long currentOffset;
 
     /**
      * {@inheritDoc}
@@ -85,7 +84,6 @@ public class KafkaRecordReader extends RecordReader<LongWritable, BytesWritable>
         this.split = inputSplit;
         this.start = inputSplit.getStartOffset();
         this.pos = inputSplit.getStartOffset();
-        this.currentOffset = inputSplit.getStartOffset();
         this.end = inputSplit.getEndOffset();
         this.fetchSize = KafkaInputFormat.getKafkaFetchSizeBytes(conf);
         this.consumer = getConsumer(inputSplit, conf);
@@ -162,15 +160,16 @@ public class KafkaRecordReader extends RecordReader<LongWritable, BytesWritable>
      */
     @VisibleForTesting
     boolean continueItr() {
-        final long remaining = end - currentOffset;
+        final long remaining = end - pos -1; // we exclude the last element. A split 10-20 means elements from 10 to 19.
         if (!canCallNext() && remaining > 0) {
-            final int theFetchSize = (fetchSize > remaining) ? (int) remaining : fetchSize;
-            LOG.debug(String.format("%s fetching %d bytes starting at offset %d", split.toString(), theFetchSize,
-                    currentOffset));
+            LOG.debug(String.format("%s fetching %d bytes starting at offset %d",
+                    split.toString(), fetchSize, pos));
             final String topic = split.getPartition().getTopic();
             final int partition = split.getPartition().getPartId();
             final FetchRequest request = new FetchRequestBuilder()
-                    .addFetch(topic, partition, currentOffset, theFetchSize).clientId("KafkaRecordReader").build();
+                    .addFetch(topic, partition, pos, fetchSize)
+                    .clientId(KafkaInputFormat.getConsumerGroup(conf))
+                    .build();
             final FetchResponse fetchResponse = consumer.fetch(request);
             if (fetchResponse.hasError()) {
                 final short code = fetchResponse.errorCode(topic, partition);
@@ -182,7 +181,6 @@ public class KafkaRecordReader extends RecordReader<LongWritable, BytesWritable>
 
             final ByteBufferMessageSet byteBufferMessageSet = fetchResponse.messageSet(topic, partition);
             currentMessageItr = byteBufferMessageSet.iterator();
-            currentOffset += byteBufferMessageSet.validBytes();
         }
         return canCallNext();
     }
@@ -203,7 +201,7 @@ public class KafkaRecordReader extends RecordReader<LongWritable, BytesWritable>
              * into a bad state if this split finished successfully and committed the offset while another input split
              * from the same partition didn't finish successfully.
              */
-            zk.setLastCommit(getConsumerGroup(conf), split.getPartition(), currentOffset, true);
+            zk.setLastCommit(getConsumerGroup(conf), split.getPartition(), pos, true);
         } finally {
             IOUtils.closeQuietly(zk);
         }
@@ -216,7 +214,8 @@ public class KafkaRecordReader extends RecordReader<LongWritable, BytesWritable>
     @VisibleForTesting
     SimpleConsumer getConsumer(final KafkaInputSplit split, final Configuration conf) {
         return new SimpleConsumer(split.getPartition().getBroker().getHost(), split.getPartition().getBroker()
-                .getPort(), getKafkaSocketTimeoutMs(conf), getKafkaBufferSizeBytes(conf), "kafkaInputFormat");
+                .getPort(), getKafkaSocketTimeoutMs(conf), getKafkaBufferSizeBytes(conf),
+                KafkaInputFormat.getConsumerGroup(conf));
     }
 
     @VisibleForTesting
@@ -252,7 +251,4 @@ public class KafkaRecordReader extends RecordReader<LongWritable, BytesWritable>
         return fetchSize;
     }
 
-    public long getCurrentOffset() {
-        return currentOffset;
-    }
 }

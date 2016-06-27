@@ -37,12 +37,12 @@ import com.google.common.collect.Sets;
 /**
  * A {@link InputFormat} that can read any number of Kafka queues in a single {@link Job}.
  * 
- * <p/>
+ * <p>
  * Note, you <em>MUST</em> use {@link DelegatingMapper} when setting {@link Job#setMapperClass(Class)} in order for this
  * {@link InputFormat} work. This is set for you every time you call {@link #addTopic(Job, String, String, Class)}, but
  * be sure not to override it!
  * 
- * <p/>
+ * <p>
  * This class may be used safely in combination with {@link org.apache.hadoop.mapreduce.lib.input.MultipleInputs}.
  * 
  * @see KafkaInputFormat
@@ -60,7 +60,7 @@ public class MultipleKafkaInputFormat extends InputFormat<LongWritable, BytesWri
     /**
      * Creates input splits for each {@link TopicConf} set up by {@link #addTopic(Job, String, String, Class)}.
      * 
-     * <p/>
+     * <p>
      * {@inheritDoc}
      */
     @Override
@@ -143,7 +143,7 @@ public class MultipleKafkaInputFormat extends InputFormat<LongWritable, BytesWri
      * Adds a topic input that will be read with the provided {@code mapperClass}. This method also sets the job-level
      * mapper ({@link Job#setMapperClass(Class)}) to {@link DelegatingMapper}, which is required for this input format
      * to work, so <em>do not override this</em>!
-     * <p/>
+     * <p>
      * Note that you can read the same topic using any number of {@link Mapper}s, same of different. Although odd, it is
      * possible to read the same queue with the same {@link Mapper}.
      * 

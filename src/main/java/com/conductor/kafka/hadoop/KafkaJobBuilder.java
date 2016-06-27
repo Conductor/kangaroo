@@ -37,7 +37,7 @@ import com.google.common.collect.Lists;
 /**
  * {@link KafkaJobBuilder} is an attempt to make Map/Reduce jobs over Kafka queues easier to configure.
  * 
- * <p/>
+ * <p>
  * Usage of this class:
  * <ol>
  * <li>
@@ -50,7 +50,7 @@ import com.google.common.collect.Lists;
  * Any additional job setup can be set on the resulting {@link Job} instance.</li>
  * </ol>
  * 
- * <p/>
+ * <p>
  * The following are required settings:
  * <ol>
  * <li>The Zookeeper connection string: {@link #setZkConnect(String)}</li>
@@ -62,7 +62,7 @@ import com.google.common.collect.Lists;
  * Otherwise, {@code defaultS3Bucket} will be used to <em>generate</em> an output path.</li>
  * </ol>
  * 
- * <p/>
+ * <p>
  * Note that calling {@link #configureJob(Configuration)} has no side effects on the instance of the
  * {@link KafkaJobBuilder}, so it is more like a "builder factory" in that sense; you can call
  * {@link #configureJob(Configuration)} as many times as you want, changing job parameters in between calls if you so
@@ -112,7 +112,7 @@ public final class KafkaJobBuilder {
      * @param conf
      *            the job conf.
      * @return a fully configured {@link Job}.
-     * @throws Exception
+     * @throws Exception error
      * @throws IllegalArgumentException
      *             if any required parameters are not set.
      */
@@ -320,7 +320,7 @@ public final class KafkaJobBuilder {
     /**
      * Sets the number of reduce tasks to use (optional).
      * 
-     * <p/>
+     * <p>
      * You do not need to set this to {@code 0} if you are not using a {@link Reducer} - the builder will infer that.
      * 
      * @param numReduceTasks
@@ -360,7 +360,7 @@ public final class KafkaJobBuilder {
     /**
      * Job will use {@link NullOutputFormat}.
      * 
-     * <p/>
+     * <p>
      * Note that {@link NullWritable} is used for output key and value.
      * 
      * @return {@code this}
@@ -373,7 +373,7 @@ public final class KafkaJobBuilder {
     /**
      * Job will use {@link TextOutputFormat}, using the fully specified {@code outputPath} if it is not null. Otherwise
      * the job will generate an output path as specified by {@link #setTextFileOutputFormat()}.
-     * <p/>
+     * <p>
      * Note that {@link Text} is used for output key and value.
      * 
      * @param outputPath
@@ -389,7 +389,7 @@ public final class KafkaJobBuilder {
      * Job will use {@link TextOutputFormat}, generating a unique output path either under the user's HDFS home
      * directory, or under {@link #getS3Bucket()} if {@link #useS3(String, String, String)} was set.
      * 
-     * <p/>
+     * <p>
      * Note that {@link Text} is used for output key and value.
      * 
      * @return {@code this}
@@ -402,7 +402,7 @@ public final class KafkaJobBuilder {
      * Job will use {@link SequenceFileOutputFormat}, using the fully specified {@code outputPath} if it is not null.
      * Otherwise the job will generate an output path as specified by {@link #setSequenceFileOutputFormat()}.
      * 
-     * <p/>
+     * <p>
      * Note that {@link BytesWritable} is used for output key and value.
      * 
      * @param outputPath
@@ -417,7 +417,7 @@ public final class KafkaJobBuilder {
     /**
      * Job will use {@link SequenceFileOutputFormat}, generating a unique output path either under the user's HDFS home
      * directory, or under {@link #getS3Bucket()} if {@link #useS3(String, String, String)} was set.
-     * <p/>
+     * <p>
      * Note that {@link BytesWritable} is used for output key and value.
      * 
      * @return {@code this}
@@ -449,7 +449,7 @@ public final class KafkaJobBuilder {
 
     /**
      * Indicates that you intend to use S3 as a target for your output.
-     * <p/>
+     * <p>
      * If you specify {@link #setSequenceFileOutputFormat()} in addition to this method, an output path will be
      * generated and put into the {@code defaultBucket}.
      * 

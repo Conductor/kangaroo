@@ -22,7 +22,7 @@ import org.apache.hadoop.util.ReflectionUtils;
  * A {@link Mapper} implementation that delegates behavior of {@link org.apache.hadoop.mapreduce.InputSplit}s to
  * multiple other mappers.
  * 
- * <p/>
+ * <p>
  * This class is taken directly from the Hadoop source code so that we can leverage {@link TaggedInputSplit} which is
  * package-private in the Hadoop library.
  * 
